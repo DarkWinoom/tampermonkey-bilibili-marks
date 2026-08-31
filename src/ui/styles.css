@@ -1,0 +1,506 @@
+/* bilibili-marks 油猴脚本 UI 样式 */
+/* 设计原则:
+   1. 浮标固定左下,小尺寸,不挡视线
+   2. 面板从浮标位置浮出,展开后背景遮罩不阻挡点击(pointer-events: none)
+   3. 颜色跟 B 站主题贴近(#00AEEC 主色)
+   4. 暗色模式自适应
+   5. 字体优先系统字体,避免远程字体
+*/
+
+#bm-root {
+  position: fixed;
+  inset: 0;
+  pointer-events: none; /* 默认不接收事件,只有浮标和面板接收 */
+  z-index: 999999;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* 浮标(图标 + "Mark 一下" 文字,垂直堆叠) */
+#bm-icon {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  pointer-events: auto;
+  z-index: 2147483647;
+  user-select: none;
+  transition: transform 0.2s ease;
+}
+
+#bm-icon:hover {
+  transform: scale(1.05);
+}
+
+.bm-icon-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #00aeec;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: background 0.2s ease;
+}
+
+#bm-icon:hover .bm-icon-circle {
+  background: #00c4f4;
+}
+
+.bm-icon-circle svg {
+  width: 24px;
+  height: 24px;
+  fill: currentColor;
+}
+
+.bm-icon-label {
+  font-size: 14px;
+  color: #333;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+/* (去掉了全屏 mask;点击外部由 JS 关闭 panel) */
+
+/* 面板 */
+#bm-panel {
+  position: fixed;
+  left: 20px;
+  bottom: 100px;
+  width: 480px;
+  max-width: calc(100vw - 40px);
+  height: 70vh;
+  max-height: 600px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  pointer-events: none;
+  overflow: hidden;
+  transform: translateY(20px) scale(0.95);
+  opacity: 0;
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+#bm-root.bm-open #bm-panel {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#bm-panel-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+  background: linear-gradient(180deg, #f8f9fa, #fff);
+}
+
+#bm-panel-title {
+  flex: 1;
+  font-weight: 600;
+  font-size: 15px;
+  color: #222;
+}
+
+#bm-panel-actions {
+  display: flex;
+  gap: 4px;
+}
+
+#bm-panel-actions button,
+#bm-panel-actions a {
+  background: transparent;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  text-decoration: none;
+  transition: background 0.15s;
+  display: inline-flex;
+  align-items: center;
+}
+
+#bm-panel-actions button:hover,
+#bm-panel-actions a:hover {
+  background: #f0f0f0;
+  color: #00aeec;
+}
+
+#bm-btn-about {
+  font-size: 16px;
+  line-height: 1;
+  margin-left: 4px;
+}
+
+#bm-panel-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* 分类侧栏 */
+#bm-categories {
+  width: 120px;
+  background: #f8f9fa;
+  border-right: 1px solid #eee;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.bm-cat {
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #444;
+  border-left: 3px solid transparent;
+  transition: background 0.15s;
+}
+
+.bm-cat:hover {
+  background: #eef0f2;
+}
+
+.bm-cat.bm-active {
+  background: #fff;
+  border-left-color: #00aeec;
+  color: #00aeec;
+  font-weight: 500;
+}
+
+.bm-cat-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bm-cat-count {
+  font-size: 11px;
+  color: #999;
+}
+
+.bm-cat-add {
+  margin: 4px 8px;
+  padding: 6px 8px;
+  background: transparent;
+  border: 1px dashed #ccc;
+  border-radius: 4px;
+  color: #999;
+  cursor: pointer;
+  font-size: 12px;
+  text-align: center;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
+}
+
+.bm-cat-add:hover {
+  border-color: #00aeec;
+  color: #00aeec;
+}
+
+/* entry 列表区 */
+#bm-entries {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.bm-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  margin-bottom: 4px;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+
+.bm-entry:hover {
+  border-color: #00aeec;
+  box-shadow: 0 2px 8px rgba(0, 174, 236, 0.1);
+}
+
+.bm-entry-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.bm-entry-label {
+  font-weight: 500;
+  color: #222;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bm-entry-meta {
+  font-size: 12px;
+  color: #999;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bm-entry-actions {
+  display: flex;
+  gap: 2px;
+}
+
+.bm-entry-actions button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  color: #999;
+  border-radius: 3px;
+  font-size: 14px;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.bm-entry-actions button:hover {
+  background: #f0f0f0;
+  color: #00aeec;
+}
+
+/* 置顶是排序行为,无视觉差异 */
+
+/* 下拉菜单(每个 entry / 分类的管理菜单) */
+.bm-dropdown-menu {
+  position: fixed;
+  z-index: 2147483647;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 4px 0;
+  width: 100px;
+}
+
+.bm-dropdown-menu button {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: none;
+  text-align: center;
+  padding: 7px 10px;
+  font-size: 13px;
+  color: #333;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.bm-dropdown-menu button:hover {
+  background: #f0f0f0;
+}
+
+.bm-dropdown-menu .bm-dd-del {
+  color: #f56c6c;
+}
+
+.bm-dropdown-menu .bm-dd-del:hover {
+  background: #fff5f5;
+  color: #f56c6c;
+}
+
+/* 保护分类(未分类)— 不显示锁,样式与其他分类一致(JS 侧控制右键菜单跳过删除) */
+
+#bm-entries-empty {
+  text-align: center;
+  color: #999;
+  padding: 48px 20px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.bm-empty-title {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+.bm-empty-hint {
+  color: #999;
+  font-size: 12px;
+  white-space: pre-line;
+}
+
+/* 底部 footer */
+#bm-panel-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-top: 1px solid #eee;
+  background: #fafafa;
+  gap: 8px;
+}
+
+.bm-footer-left,
+.bm-footer-right {
+  display: flex;
+  gap: 6px;
+}
+
+#bm-panel-footer button {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  color: #555;
+  cursor: pointer;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    color 0.15s;
+}
+
+#bm-panel-footer button:hover {
+  background: #00aeec;
+  border-color: #00aeec;
+  color: #fff;
+}
+
+/* 收藏视频按钮(头部) */
+#bm-btn-capture {
+  background: #00aeec;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  transition:
+    background 0.15s,
+    opacity 0.15s;
+}
+
+/* enabled + hover 才换背景色(避免禁用态 hover 仍变) */
+#bm-btn-capture:not(:disabled):hover {
+  color: #fff !important;
+  background: #00c4f4 !important;
+}
+
+#bm-btn-capture:disabled,
+#bm-btn-capture:disabled:hover {
+  background: #ccc !important;
+  color: #666 !important;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Toast 提示 */
+#bm-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: rgba(0, 0, 0, 0.78);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  pointer-events: none;
+  opacity: 0;
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
+  z-index: 1000000;
+}
+
+#bm-root.bm-toast #bm-toast {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* 暗色模式 */
+@media (prefers-color-scheme: dark) {
+  #bm-panel {
+    background: #222;
+    color: #ddd;
+  }
+  #bm-panel-header {
+    background: linear-gradient(180deg, #2a2a2a, #222);
+    border-bottom-color: #333;
+  }
+  #bm-panel-title {
+    color: #eee;
+  }
+  #bm-panel-actions button {
+    color: #aaa;
+  }
+  #bm-panel-actions button:hover {
+    background: #333;
+  }
+  #bm-categories {
+    background: #1f1f1f;
+    border-right-color: #333;
+  }
+  .bm-cat {
+    color: #ccc;
+  }
+  .bm-cat:hover {
+    background: #2a2a2a;
+  }
+  .bm-cat.bm-active {
+    background: #2a2a2a;
+    color: #00aeec;
+  }
+  .bm-cat-add {
+    border-color: #444;
+    color: #888;
+  }
+  .bm-entry {
+    background: #2a2a2a;
+    border-color: #333;
+  }
+  .bm-entry:hover {
+    border-color: #00aeec;
+  }
+  .bm-entry-label {
+    color: #eee;
+  }
+  #bm-panel-footer {
+    background: #1f1f1f;
+    border-top-color: #333;
+  }
+  #bm-panel-footer button {
+    background: #2a2a2a;
+    border-color: #444;
+    color: #ccc;
+  }
+  .bm-entry-actions button:hover {
+    background: #333;
+  }
+  #bm-entries-empty button {
+    background: #00aeec;
+  }
+}
