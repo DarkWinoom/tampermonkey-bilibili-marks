@@ -15,11 +15,14 @@ const pkg = JSON.parse(
 //   1. inline base64 sourceMap 里有 globalThis 字符串,eslint 误判
 //   2. minify 会合并赋值为 comma sequence,触发 no-sequences
 const metaHeader = `// ==UserScript==
-// @name         ${pkg.name}
+// @name         B 站收藏夹增强工具
+// @name:zh-CN   B 站收藏夹增强工具
+// @name:en      Bilibili Marks
 // @namespace    darkwinoom/tampermonkey-bilibili-marks
 // @version      ${pkg.version}
 // @description  ${pkg.description}
 // @match        https://www.bilibili.com/*
+// @icon         https://www.bilibili.com/favicon.ico
 // @grant        GM.setValue
 // @grant        GM.getValue
 // @grant        GM.deleteValue

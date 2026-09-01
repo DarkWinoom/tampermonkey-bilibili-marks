@@ -1,9 +1,12 @@
 // ==UserScript==
-// @name         tampermonkey-bilibili-marks
+// @name         B 站收藏夹增强工具
+// @name:zh-CN   B 站收藏夹增强工具
+// @name:en      Bilibili Marks
 // @namespace    darkwinoom/tampermonkey-bilibili-marks
-// @version      0.1.0
+// @version      1.0.0
 // @description  Tampermonkey 脚本:管理 B 站收藏分类与多时间点标记,支持一键收藏与静态页分享。
 // @match        https://www.bilibili.com/*
+// @icon         https://www.bilibili.com/favicon.ico
 // @grant        GM.setValue
 // @grant        GM.getValue
 // @grant        GM.deleteValue
