@@ -1,4 +1,5 @@
-// 浮标:图标 + "Mark 一下" 文字(垂直堆叠,整体可点击)
+// 浮标:长条状侧标签,贴视口 left:0 bottom:0
+// 内容:图标 + M A R K 四个字母垂直堆叠(不占位置)
 import { h, on, svgIcon } from './dom';
 
 const ICON_PATH =
@@ -7,7 +8,7 @@ const ICON_PATH =
 export function createIcon(): HTMLElement {
   return h('div', { id: 'bm-icon' }, [
     h('div', { class: 'bm-icon-circle' }, [svgIcon(ICON_PATH)]),
-    h('div', { class: 'bm-icon-label' }, 'Mark 一下'),
+    ...['M', 'A', 'R', 'K'].map((c) => h('span', { class: 'bm-icon-letter' }, c)),
   ]);
 }
 

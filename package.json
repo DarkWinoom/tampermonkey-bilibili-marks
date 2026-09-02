@@ -1,6 +1,6 @@
 {
   "name": "tampermonkey-bilibili-marks",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Tampermonkey 脚本:管理 B 站收藏分类与多时间点标记,支持一键收藏与静态页分享。",
   "type": "module",

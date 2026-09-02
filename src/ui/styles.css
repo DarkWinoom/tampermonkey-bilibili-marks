@@ -19,54 +19,56 @@
   line-height: 1.5;
 }
 
-/* 浮标(图标 + "Mark 一下" 文字,垂直堆叠) */
+/* 浮标:长条状侧标签,贴视口 left:0 bottom:0,内容:图标 + M/A/R/K 四字母垂直堆叠 */
 #bm-icon {
   position: fixed;
-  left: 20px;
+  left: 0;
   bottom: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
+  padding: 8px 4px 12px;
+  background: #00aeec;
+  color: #fff;
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
   cursor: pointer;
   pointer-events: auto;
   z-index: 2147483647;
   user-select: none;
-  transition: transform 0.2s ease;
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+  transition: background 0.15s ease;
 }
 
 #bm-icon:hover {
-  transform: scale(1.05);
-}
-
-.bm-icon-circle {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: #00aeec;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  transition: background 0.2s ease;
-}
-
-#bm-icon:hover .bm-icon-circle {
   background: #00c4f4;
 }
 
-.bm-icon-circle svg {
+.bm-icon-circle {
   width: 24px;
   height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bm-icon-circle svg {
+  width: 18px;
+  height: 18px;
   fill: currentColor;
 }
 
-.bm-icon-label {
-  font-size: 14px;
-  color: #333;
-  font-weight: 500;
-  letter-spacing: 0.5px;
+.bm-icon-letter {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: 0;
 }
 
 /* (去掉了全屏 mask;点击外部由 JS 关闭 panel) */
@@ -74,7 +76,7 @@
 /* 面板 */
 #bm-panel {
   position: fixed;
-  left: 20px;
+  left: 35px;
   bottom: 100px;
   width: 480px;
   max-width: calc(100vw - 40px);
