@@ -1,4 +1,4 @@
-// 主面板:顶部"我的收藏"标题 + "收藏视频"按钮;底部 footer(导入/导出/分享);中间 分类侧栏 + entry 列表
+// 主面板:顶部"我的收藏"标题 + 搜索栏 + "收藏视频"按钮;底部 footer(导入/导出/分享);中间 分类侧栏 + entry 列表
 // 负责渲染和用户交互;不直接操作 storage,通过回调把变更上报
 import { h, on, showToast, getDoc } from "./dom";
 import { formatTime } from "../format";
@@ -6,6 +6,59 @@ import type { Category, Entry, StoreSchema } from "../types";
 
 // 沙箱模式下用 unsafeWindow.document(否则 appendChild 不可见)
 var _doc = getDoc();
+
+/** 文本是否包含搜索词(大小写不敏感) */
+export function matchesQuery(text: string | undefined, q: string): boolean {
+  if (!q) return true;
+  if (!text) return false;
+  return text.toLowerCase().includes(q.toLowerCase());
+}
+
+/** 过滤 entries(label / bvid / title 任一字段包含 q) */
+export function filterEntries(entries: readonly Entry[], q: string): Entry[] {
+  const query = q.trim().toLowerCase();
+  if (!query) return entries.slice();
+  return entries.filter(
+    (e) => matchesQuery(e.label, query) || matchesQuery(e.bvid, query) || matchesQuery(e.title, query),
+  );
+}
+
+/** 搜索时按"分类下命中数"过滤分类;未分类始终保留;返回 [{ category, count }] */
+export function filterCategoriesBySearch(
+  categories: readonly Category[],
+  entries: readonly Entry[],
+  q: string,
+): Array<{ category: Category; count: number }> {
+  const query = q.trim();
+  const hasQuery = query.length > 0;
+  const out: Array<{ category: Category; count: number }> = [];
+  for (const c of categories) {
+    const inCat = entries.filter((e) => e.categoryId === c.id);
+    const count = hasQuery ? filterEntries(inCat, query).length : inCat.length;
+    if (hasQuery && count === 0 && c.id !== UNCATEGORIZED_ID) continue;
+    out.push({ category: c, count });
+  }
+  return out;
+}
+
+/** 把 text 中所有匹配 q 的子串用 <mark class="bm-hl"> 包裹(XSS 安全,用 textContent 拼) */
+export function highlightInto(parent: HTMLElement, text: string, q: string): void {
+  const query = q.trim();
+  if (!query) { parent.textContent = text; return; }
+  const lower = text.toLowerCase();
+  const ql = query.toLowerCase();
+  let i = 0;
+  while (i < text.length) {
+    const idx = lower.indexOf(ql, i);
+    if (idx === -1) {
+      parent.appendChild(_doc.createTextNode(text.slice(i)));
+      return;
+    }
+    if (idx > i) parent.appendChild(_doc.createTextNode(text.slice(i, idx)));
+    parent.appendChild(h('mark', { class: 'bm-hl' }, text.slice(idx, idx + ql.length)));
+    i = idx + ql.length;
+  }
+}
 
 export interface PanelCallbacks {
   /** 名称(无 icon) */
@@ -35,6 +88,7 @@ export interface PanelCallbacks {
 
 interface PanelState {
   selectedCategoryId: string | null;
+  searchQuery: string;
 }
 
 export interface PanelHandle {
@@ -55,7 +109,7 @@ export function createPanel(
   cb: PanelCallbacks,
   getIsVideoPage: () => boolean,
 ): PanelHandle {
-  const state: PanelState = { selectedCategoryId: null };
+  const state: PanelState = { selectedCategoryId: null, searchQuery: '' };
   // 持有当前 data 引用(每次 render 更新,供 promptMoveEntry 等读分类列表)
   let currentData: StoreSchema = initial;
 
@@ -85,6 +139,16 @@ export function createPanel(
     ]),
   ]);
 
+  // 搜索栏(无需按钮,输入即过滤)
+  const searchInput = h("input", {
+    id: "bm-search",
+    type: "search",
+    class: "bm-search",
+    placeholder: "搜索标注 / BV号 / 标题",
+    autocomplete: "off",
+  }) as HTMLInputElement;
+  const searchBar = h("div", { id: "bm-search-bar" }, [searchInput]);
+
   // 主体
   const catList = h("div", { id: "bm-categories" });
   const entryList = h("div", { id: "bm-entries" });
@@ -109,6 +173,7 @@ export function createPanel(
   const toast = h("div", { id: "bm-toast" });
 
   panel.appendChild(header);
+  panel.appendChild(searchBar);
   panel.appendChild(body);
   panel.appendChild(footer);
 
@@ -132,6 +197,12 @@ export function createPanel(
   cleanupFns.push(on(importBtn, "click", () => cb.onImport()));
   cleanupFns.push(on(exportBtn, "click", () => cb.onExport()));
   cleanupFns.push(on(shareBtn, "click", () => cb.onShare()));
+
+  // 搜索:input 即过滤 + 关键词高亮(无按钮)
+  searchInput.addEventListener("input", () => {
+    state.searchQuery = searchInput.value;
+    render(currentData);
+  });
 
   // 记录当前打开的 dropdown(全局只有一个)
   let openDropdownEntryId: string | null = null;
@@ -224,11 +295,12 @@ export function createPanel(
     if (uncat) sorted.push(uncat);
     sorted = sorted.concat(others);
 
-    for (var i = 0; i < sorted.length; i += 1) {
-      var cat = sorted[i]!;
-      var count = data.entries.filter(function (e) {
-        return e.categoryId === cat.id;
-      }).length;
+    // 搜索过滤分类 + 算 count(filterCategoriesBySearch 内部处理未分类例外)
+    var visible = filterCategoriesBySearch(sorted, data.entries, state.searchQuery);
+
+    for (var i = 0; i < visible.length; i += 1) {
+      var cat = visible[i]!.category;
+      var count = visible[i]!.count;
       var isActive = cat.id === state.selectedCategoryId;
       var isProtected = cat.id === UNCATEGORIZED_ID;
       var catEl = h(
@@ -293,36 +365,50 @@ export function createPanel(
         return a.createdAt - b.createdAt;
       });
 
-    if (entries.length === 0) {
-      // 空状态:引导用户去视频页收藏,而不是手动添加
-      var empty2 = h("div", { id: "bm-entries-empty" }, [
-        h("div", { class: "bm-empty-title" }, "该分类还没有收藏"),
-        h(
-          "div",
-          { class: "bm-empty-hint" },
-          "您可以在 B 站任意视频、番剧页点面板顶部「收藏视频」一键收藏，它会自动记录您当前观看时间",
-        ),
-      ]);
-      entryList.appendChild(empty2);
+    // 应用搜索过滤(空 query 返回所有)
+    var filtered = filterEntries(entries, state.searchQuery);
+
+    if (filtered.length === 0) {
+      if (entries.length === 0) {
+        // 空状态:引导用户去视频页收藏,而不是手动添加
+        var empty2 = h("div", { id: "bm-entries-empty" }, [
+          h("div", { class: "bm-empty-title" }, "该分类还没有收藏"),
+          h(
+            "div",
+            { class: "bm-empty-hint" },
+            "您可以在 B 站任意视频、番剧页点面板顶部「收藏视频」一键收藏，它会自动记录您当前观看时间",
+          ),
+        ]);
+        entryList.appendChild(empty2);
+      } else {
+        // 有 entry 但搜索无匹配
+        entryList.appendChild(
+          h("div", { id: "bm-entries-empty" }, [
+            h("div", { class: "bm-empty-title" }, "没有匹配「" + state.searchQuery.trim() + "」的收藏"),
+            h("div", { class: "bm-empty-hint" }, "试试别的关键词,或清空搜索框"),
+          ]),
+        );
+      }
       return;
     }
 
-    for (var j = 0; j < entries.length; j += 1) {
-      var e = entries[j]!;
+    for (var j = 0; j < filtered.length; j += 1) {
+      var e = filtered[j]!;
       // 置顶是排序行为,无视觉差异(label 保持纯文本)
+      var labelEl = h("div", { class: "bm-entry-label" });
+      highlightInto(labelEl, e.label || "(未命名)", state.searchQuery);
+
+      var metaEl = h("div", { class: "bm-entry-meta" });
+      metaEl.appendChild(_doc.createTextNode(formatTime(e.time) + " · "));
+      highlightInto(metaEl, e.bvid, state.searchQuery);
+      if (e.p > 1) metaEl.appendChild(_doc.createTextNode(" · P" + e.p));
+      if (e.title) {
+        metaEl.appendChild(_doc.createTextNode(" · "));
+        highlightInto(metaEl, e.title, state.searchQuery);
+      }
+
       var rowEl = h("div", { class: "bm-entry" }, [
-        h("div", { class: "bm-entry-info" }, [
-          h("div", { class: "bm-entry-label" }, e.label || "(未命名)"),
-          h(
-            "div",
-            { class: "bm-entry-meta" },
-            formatTime(e.time) +
-              " · " +
-              e.bvid +
-              (e.p > 1 ? " · P" + e.p : "") +
-              (e.title ? " · " + e.title : ""),
-          ),
-        ]),
+        h("div", { class: "bm-entry-info" }, [labelEl, metaEl]),
         h("div", { class: "bm-entry-actions" }, [
           h("button", { class: "bm-play", title: "跳到该时间点播放" }, "▶"),
           h("button", { class: "bm-manage", title: "管理" }, "⚙"),

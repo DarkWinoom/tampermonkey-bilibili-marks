@@ -156,6 +156,51 @@
   overflow: hidden;
 }
 
+/* 搜索栏(无按钮,input 即过滤) */
+#bm-search-bar {
+  padding: 8px 12px;
+  border-bottom: 1px solid #eee;
+  background: #fafafa;
+}
+.bm-search {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 13px;
+  color: #222;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+.bm-search:focus { border-color: #00AEEC; }
+.bm-search::placeholder { color: #999; }
+
+/* 自带清空 × 按钮:增大触碰范围 + cursor: pointer */
+.bm-search::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 18px;
+  width: 18px;
+  margin-right: 2px;
+  border-radius: 50%;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'><path stroke='%23999' stroke-width='2' fill='none' stroke-linecap='round' d='M4 4l10 10M14 4l-10 10'/></svg>") center/12px 12px no-repeat;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+.bm-search::-webkit-search-cancel-button:hover {
+  background-color: #f0f0f0;
+}
+
+/* 关键词高亮 */
+mark.bm-hl {
+  background: #fff3a3;
+  color: inherit;
+  padding: 0;
+  font-weight: 600;
+}
+
 /* 分类侧栏 */
 #bm-categories {
   width: 120px;
@@ -452,6 +497,26 @@
   #bm-panel-header {
     background: linear-gradient(180deg, #2a2a2a, #222);
     border-bottom-color: #333;
+  }
+  #bm-search-bar {
+    background: #1f1f1f;
+    border-bottom-color: #333;
+  }
+  .bm-search {
+    background: #2a2a2a;
+    border-color: #444;
+    color: #eee;
+  }
+  .bm-search::placeholder { color: #888; }
+  .bm-search::-webkit-search-cancel-button {
+    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'><path stroke='%23aaa' stroke-width='2' fill='none' stroke-linecap='round' d='M4 4l10 10M14 4l-10 10'/></svg>") center/12px 12px no-repeat;
+  }
+  .bm-search::-webkit-search-cancel-button:hover {
+    background-color: #333;
+  }
+  mark.bm-hl {
+    background: #5a4a00;
+    color: #ffe48a;
   }
   #bm-panel-title {
     color: #eee;
