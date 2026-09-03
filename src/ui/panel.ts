@@ -41,10 +41,13 @@ export function filterCategoriesBySearch(
   return out;
 }
 
-/** 把 text 中所有匹配 q 的子串用 <mark class="bm-hl"> 包裹(XSS 安全,用 textContent 拼) */
+/** 把 text 中所有匹配 q 的子串用 <mark class="bm-hl"> 包裹(XSS 安全,用 textContent 拼)
+ *  append 语义:不覆盖 parent 已有 children,与前序 appendChild 的内容共存
+ *  关键:query 为空时用 appendChild(textNode) 而不是 parent.textContent = text
+ *  否则会清掉前面 append 的 time span / 分隔符等 */
 export function highlightInto(parent: HTMLElement, text: string, q: string): void {
   const query = q.trim();
-  if (!query) { parent.textContent = text; return; }
+  if (!query) { parent.appendChild(_doc.createTextNode(text)); return; }
   const lower = text.toLowerCase();
   const ql = query.toLowerCase();
   let i = 0;
@@ -398,8 +401,11 @@ export function createPanel(
       var labelEl = h("div", { class: "bm-entry-label" });
       highlightInto(labelEl, e.label || "(未命名)", state.searchQuery);
 
+      // meta 行:time · bvid · p? · title
+      // highlightInto 是 append 语义,不会覆盖前面 append 的 time span
       var metaEl = h("div", { class: "bm-entry-meta" });
-      metaEl.appendChild(_doc.createTextNode(formatTime(e.time) + " · "));
+      metaEl.appendChild(h("span", { class: "bm-entry-time" }, formatTime(e.time)));
+      metaEl.appendChild(_doc.createTextNode(" · "));
       highlightInto(metaEl, e.bvid, state.searchQuery);
       if (e.p > 1) metaEl.appendChild(_doc.createTextNode(" · P" + e.p));
       if (e.title) {

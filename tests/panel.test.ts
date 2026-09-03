@@ -66,10 +66,13 @@ describe('filterEntries', () => {
 describe('highlightInto', () => {
   const doc = getDoc();
 
-  it('empty query sets plain textContent', () => {
+  it('empty query appends text (does not clear prior children)', () => {
     const el = doc.createElement('span');
+    // 关键:之前用 parent.textContent = text 会清掉前面 append 的 children
+    // 现在用 appendChild 保留前序内容
+    el.appendChild(doc.createTextNode('prefix · '));
     highlightInto(el, 'hello', '');
-    expect(el.textContent).toBe('hello');
+    expect(el.textContent).toBe('prefix · hello');
     expect(el.querySelector('mark')).toBeNull();
   });
 

@@ -3,7 +3,7 @@
 // @name:zh-CN   B 站收藏夹增强工具
 // @name:en      Bilibili Marks
 // @namespace    darkwinoom/tampermonkey-bilibili-marks
-// @version      1.1.0
+// @version      1.1.1
 // @description  Tampermonkey 脚本:管理 B 站收藏分类与多时间点标记,支持一键收藏与静态页分享。
 // @match        https://www.bilibili.com/*
 // @icon         https://www.bilibili.com/favicon.ico
@@ -317,7 +317,7 @@
   function highlightInto(parent, text, q) {
     const query = q.trim();
     if (!query) {
-      parent.textContent = text;
+      parent.appendChild(_doc.createTextNode(text));
       return;
     }
     const lower = text.toLowerCase();
@@ -554,7 +554,8 @@
         var labelEl = h("div", { class: "bm-entry-label" });
         highlightInto(labelEl, e.label || "(\u672A\u547D\u540D)", state2.searchQuery);
         var metaEl = h("div", { class: "bm-entry-meta" });
-        metaEl.appendChild(_doc.createTextNode(formatTime(e.time) + " \xB7 "));
+        metaEl.appendChild(h("span", { class: "bm-entry-time" }, formatTime(e.time)));
+        metaEl.appendChild(_doc.createTextNode(" \xB7 "));
         highlightInto(metaEl, e.bvid, state2.searchQuery);
         if (e.p > 1) metaEl.appendChild(_doc.createTextNode(" \xB7 P" + e.p));
         if (e.title) {
@@ -1482,6 +1483,12 @@ mark.bm-hl {
   text-overflow: ellipsis;
 }
 
+.bm-entry-time {
+  color: #00AEEC;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
 .bm-entry-actions {
   display: flex;
   gap: 2px;
@@ -1723,6 +1730,9 @@ mark.bm-hl {
   }
   .bm-entry-label {
     color: #eee;
+  }
+  .bm-entry-time {
+    color: #00C4F4;
   }
   #bm-panel-footer {
     background: #1f1f1f;

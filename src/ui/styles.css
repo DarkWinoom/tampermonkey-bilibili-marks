@@ -313,6 +313,12 @@ mark.bm-hl {
   text-overflow: ellipsis;
 }
 
+.bm-entry-time {
+  color: #00AEEC;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
 .bm-entry-actions {
   display: flex;
   gap: 2px;
@@ -554,6 +560,9 @@ mark.bm-hl {
   }
   .bm-entry-label {
     color: #eee;
+  }
+  .bm-entry-time {
+    color: #00C4F4;
   }
   #bm-panel-footer {
     background: #1f1f1f;
